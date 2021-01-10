@@ -62,6 +62,8 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
       val level = UInt(config.levelWidth.W)
       /** Pan */
       val pan = UInt(config.panWidth.W)
+      /** Interpolate to zero */
+      val zero = Bool()
     })
     /** Output port */
     val out = ValidIO(new Bundle {
@@ -80,6 +82,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
       val check = Output(Bool())
       val fetch = Output(Bool())
       val decode = Output(Bool())
+      val zero = Output(Bool())
       val interpolate = Output(Bool())
       val level = Output(Bool())
       val pan = Output(Bool())
@@ -89,7 +92,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
   // States
   object State {
-    val idle :: check :: fetch :: decode :: interpolate :: level :: pan :: done :: Nil = Enum(8)
+    val idle :: check :: fetch :: decode :: zero :: interpolate :: level :: pan :: done :: Nil = Enum(9)
   }
 
   // Registers
@@ -116,8 +119,6 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   lerp.io.samples := inputReg.state.samples
   lerp.io.index := inputReg.state.lerpIndex
 
-  // Decode ADPCM data
-  //
   // When the loop start flag is asserted the pipeline will use the cached step and sample values
   // for the start of the loop. Otherwise, the decoded ADPCM step and sample values will be used
   // instead.
@@ -130,6 +131,11 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     val step = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopStep, adpcm.io.out.step)
     val sample = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopSample, adpcm.io.out.sample)
     inputReg.state.adpcm(step, sample)
+  }
+
+  // When fading out we just add an empty ADPCM value so the pipeline will interpolate to zero
+  when(stateReg === State.zero) {
+    inputReg.state.adpcm(127.S, 0.S)
   }
 
   // Interpolate sample values
@@ -165,7 +171,12 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     }
 
     // Check whether PCM data is required
-    is(State.check) { stateReg := Mux(inputReg.state.underflow, State.fetch, State.interpolate) }
+    is(State.check) {
+      stateReg := MuxCase(State.interpolate, Seq(
+        (inputReg.state.underflow && inputReg.zero) -> State.zero,
+        inputReg.state.underflow -> State.fetch
+      ))
+    }
 
     // Fetch sample data
     is(State.fetch) {
@@ -174,6 +185,9 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
     // Decode ADPCM sample
     is(State.decode) { stateReg := State.interpolate }
+
+    // Insert zero sample
+    is(State.zero) { stateReg := State.interpolate }
 
     // Interpolate sample
     is(State.interpolate) { stateReg := State.level }
@@ -198,10 +212,11 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   io.debug.check := stateReg === State.check
   io.debug.fetch := stateReg === State.fetch
   io.debug.decode := stateReg === State.decode
+  io.debug.zero := stateReg === State.zero
   io.debug.interpolate := stateReg === State.interpolate
   io.debug.level := stateReg === State.level
   io.debug.pan := stateReg === State.pan
   io.debug.done := stateReg === State.done
 
-  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${ Hexadecimal(pcmDataReg) }, pipelineState: ${ inputReg.state })\n")
+//  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${ Hexadecimal(pcmDataReg) }, pipelineState: ${ inputReg.state })\n")
 }

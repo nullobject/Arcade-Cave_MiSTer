@@ -106,15 +106,17 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.in.bits.pitch := channelReg.pitch
   audioPipeline.io.in.bits.level := channelReg.level
   audioPipeline.io.in.bits.pan := channelReg.pan
+  audioPipeline.io.in.bits.zero := channelStateReg.fadeOut
   audioPipeline.io.pcmData.valid := io.mem.valid
   audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
   audioPipeline.io.loopStart := channelStateReg.loopStart
 
   // Control signals
-  val start = !channelStateReg.enable && !channelStateReg.active && channelReg.flags.keyOn
-  val stop = channelStateReg.enable && !channelReg.flags.keyOn
+  val start = !channelStateReg.keyOn && channelReg.flags.keyOn && !channelStateReg.active
+  val stop = channelStateReg.keyOn && !channelReg.flags.keyOn
   val active = channelStateReg.active || start
-  val done = channelStateReg.done
+  val zero = channelStateReg.fadeOut && channelStateReg.audioPipelineState.isZero
+  val done = zero && channelStateReg.complete
 
   // Fetch PCM data when the audio pipeline is ready for data
   val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && !io.mem.waitReq, io.mem.valid)
@@ -124,14 +126,14 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   // Clear accumulator
   when(stateReg === State.idle) { accumulatorReg := Audio.zero(config.internalSampleWidth) }
 
-  // Start/stop channel
+  // Start/stop/reset channel
   when(stateReg === State.check) {
     when(start) {
       channelStateReg.start(channelReg.startAddr)
     }.elsewhen(stop) {
       channelStateReg.stop()
-    }.elsewhen(done) {
-      channelStateReg.clearDone()
+    }.elsewhen(zero) {
+      channelStateReg.reset()
     }
   }
 
@@ -216,5 +218,5 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.debug.done := stateReg === State.done
   io.debug.channelReg := channelStateReg
 
-  printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
+  printf(p"ChannelController(state: $stateReg, active: ${ io.active }, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
 }

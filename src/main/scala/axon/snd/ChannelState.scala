@@ -36,12 +36,14 @@ import chisel3._
 
 /** Represents the state of a channel. */
 class ChannelState(private val config: YMZ280BConfig) extends Bundle {
-  /** Asserted when the channel is enabled */
-  val enable = Bool()
+  /** Asserted when the channel has a key on */
+  val keyOn = Bool()
+  /** Asserted when the channel is fading out */
+  val fadeOut = Bool()
   /** Asserted when the channel is playing a sample */
   val active = Bool()
-  /** Asserted when the channel has reached the end address */
-  val done = Bool()
+  /** Asserted when the channel has completed playing a sample (i.e. reached the end address) */
+  val complete = Bool()
   /** Asserted when the channel is processing the high ADPCM nibble */
   val nibble = Bool()
   /** Sample address */
@@ -53,9 +55,10 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
 
   /** Starts the channel at the given address. */
   def start(startAddr: UInt) = {
-    enable := true.B
+    keyOn := true.B
+    fadeOut := false.B
     active := true.B
-    done := false.B
+    complete := false.B
     nibble := false.B
     addr := startAddr
     loopStart := false.B
@@ -64,9 +67,18 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
 
   /** Stops the channel. */
   def stop() = {
-    enable := false.B
+    keyOn := false.B
+    fadeOut := true.B
+    active := true.B
+    complete := false.B
+  }
+
+  /** Reset the channel. */
+  def reset() = {
+    keyOn := false.B
+    fadeOut := false.B
     active := false.B
-    done := false.B
+    complete := false.B
   }
 
   /**
@@ -83,17 +95,12 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
       when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
         addr := channelReg.loopStartAddr
       }.elsewhen(addr === channelReg.endAddr) {
-        active := false.B
-        done := true.B
+        fadeOut := true.B
+        complete := true.B
       }.otherwise {
         addr := addr + 1.U
       }
     }
-  }
-
-  /** Clears the done flag. */
-  def clearDone() = {
-    done := false.B
   }
 }
 
@@ -101,9 +108,10 @@ object ChannelState {
   /** Returns the default channel state. */
   def default(config: YMZ280BConfig): ChannelState = {
     val state = Wire(new ChannelState(config))
-    state.enable := false.B
+    state.keyOn := false.B
+    state.fadeOut := false.B
     state.active := false.B
-    state.done := false.B
+    state.complete := false.B
     state.nibble := false.B
     state.addr := 0.U
     state.loopStart := false.B

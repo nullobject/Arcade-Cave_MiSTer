@@ -98,6 +98,21 @@ trait ChannelControllerTestHelpers {
 
   protected def waitForAudioValid(dut: ChannelController) =
     while (!dut.io.audio.valid.peek().litToBoolean) { dut.clock.step() }
+
+  protected def waitForActive(dut: ChannelController, active: Boolean = true) = {
+    waitForCheck(dut)
+    if (active) {
+      while (!dut.io.active.peek().litToBoolean) {
+        dut.clock.step()
+        waitForCheck(dut)
+      }
+    } else {
+      while (dut.io.active.peek().litToBoolean) {
+        dut.clock.step()
+        waitForCheck(dut)
+      }
+    }
+  }
 }
 
 class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {
@@ -240,7 +255,9 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Stop
       waitForIdle(dut)
       stopChannel(dut, index = 0)
-      dut.clock.step()
+
+      // Inactive
+      waitForActive(dut, false)
 
       // Start
       waitForIdle(dut)

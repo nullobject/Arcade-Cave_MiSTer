@@ -63,6 +63,9 @@ class AudioPipelineState(private val config: YMZ280BConfig) extends Bundle {
     underflow := index.head(1)
     lerpIndex := index.tail(1)
   }
+
+  /** Asserted when the current sample is zero. */
+  def isZero = samples(1) === 0.S
 }
 
 object AudioPipelineState {

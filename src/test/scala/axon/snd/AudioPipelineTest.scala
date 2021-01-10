@@ -48,7 +48,8 @@ trait AudioPipelineTestHelpers {
                               adpcmStep: Int = 127,
                               pitch: Int = 255,
                               level: Int = 255,
-                              pan: Int = 8) = {
+                              pan: Int = 8,
+                              zero: Boolean = false) = {
     waitForIdle(dut)
     dut.io.in.valid.poke(true.B)
     dut.io.in.bits.state.samples(0).poke(samples._1.S)
@@ -59,6 +60,7 @@ trait AudioPipelineTestHelpers {
     dut.io.in.bits.pitch.poke(pitch.U)
     dut.io.in.bits.level.poke(level.U)
     dut.io.in.bits.pan.poke(pan.U)
+    dut.io.in.bits.zero.poke(zero.B)
   }
 
   protected def waitForIdle(dut: AudioPipeline) =
@@ -72,6 +74,9 @@ trait AudioPipelineTestHelpers {
 
   protected def waitForDecode(dut: AudioPipeline) =
     while (!dut.io.debug.decode.peek().litToBoolean) { dut.clock.step() }
+
+  protected def waitForZero(dut: AudioPipeline) =
+    while (!dut.io.debug.zero.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForInterpolate(dut: AudioPipeline) =
     while (!dut.io.debug.interpolate.peek().litToBoolean) { dut.clock.step() }
@@ -117,7 +122,18 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "move to the latch state when the pipeline has underflowed" in {
+  it should "move to the zero state when the pipeline underflows while it is fading out" in {
+    test(mkChannelPipeline) { dut =>
+      dut.io.in.valid.poke(true.B)
+      dut.io.in.bits.zero.poke(true.B)
+      dut.io.in.bits.state.underflow.poke(true.B)
+      waitForCheck(dut)
+      dut.clock.step()
+      dut.io.debug.zero.expect(true.B)
+    }
+  }
+
+  it should "move to the latch state when the pipeline underflows" in {
     test(mkChannelPipeline) { dut =>
       dut.io.in.valid.poke(true.B)
       dut.io.in.bits.state.underflow.poke(true.B)
@@ -165,7 +181,7 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   behavior of "pipeline"
 
-  it should "fetch ADPCM data when the pipeline has underflowed" in {
+  it should "fetch ADPCM data when the pipeline underflows" in {
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, underflow = true, lerpIndex = 64, pitch = 63)
       dut.io.pcmData.ready.expect(false.B)
@@ -212,6 +228,15 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
       waitForDone(dut)
       dut.io.out.bits.audio.left.expect(-2.S)
       dut.io.out.bits.audio.right.expect(-2.S)
+    }
+  }
+
+  it should "interpolate to zero" in {
+    test(mkChannelPipeline) { dut =>
+      startPipeline(dut, samples = (16, 16), underflow = true, lerpIndex = 128, zero = true)
+      waitForDone(dut)
+      dut.io.out.bits.audio.left.expect(4.S)
+      dut.io.out.bits.audio.right.expect(4.S)
     }
   }
 
