@@ -53,7 +53,11 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   /** Audio pipeline state */
   val audioPipelineState = new AudioPipelineState(config)
 
-  /** Starts the channel at the given address. */
+  /**
+   * Starts the channel at the given address.
+   *
+   * @param startAddr The start address of the sample.
+   */
   def start(startAddr: UInt) = {
     keyOn := true.B
     fadeOut := false.B
@@ -73,7 +77,12 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
     complete := false.B
   }
 
-  /** Reset the channel. */
+  /** Deactivates the channel. */
+  def deactivate() = {
+    active := false.B
+  }
+
+  /** Resets the channel. */
   def reset() = {
     keyOn := false.B
     fadeOut := false.B

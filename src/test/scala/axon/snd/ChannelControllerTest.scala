@@ -113,6 +113,21 @@ trait ChannelControllerTestHelpers {
       }
     }
   }
+
+  protected def waitForDone(dut: ChannelController, done: Boolean = true) = {
+    waitForCheck(dut)
+    if (done) {
+      while (!dut.io.done.peek().litToBoolean) {
+        dut.clock.step()
+        waitForCheck(dut)
+      }
+    } else {
+      while (dut.io.done.peek().litToBoolean) {
+        dut.clock.step()
+        waitForCheck(dut)
+      }
+    }
+  }
 }
 
 class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {
@@ -400,30 +415,18 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
       startChannel(dut, index = 0, endAddress = 1)
+      waitForActive(dut)
 
-      // Done
-      for (_ <- 0 to 4) {
-        waitForRead(dut)
-        waitForCheck(dut)
-      }
-      dut.io.active.expect(false.B)
-      dut.io.done.expect(true.B)
-
-      // Key still down
-      waitForRead(dut)
-      waitForCheck(dut)
-      dut.io.active.expect(false.B)
+      // Inactive
+      waitForActive(dut, false)
 
       // Stop
       stopChannel(dut, index = 0)
-      waitForRead(dut)
-      waitForCheck(dut)
+      dut.clock.step()
 
       // Start
       startChannel(dut, index = 0, endAddress = 1)
-      waitForRead(dut)
-      waitForCheck(dut)
-      dut.io.active.expect(true.B)
+      waitForActive(dut)
     }
   }
 
@@ -445,7 +448,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
-  it should "deassert the active signal when a channel has reached the end address" in {
+  it should "deassert the active signal when a channel has finished playing" in {
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)

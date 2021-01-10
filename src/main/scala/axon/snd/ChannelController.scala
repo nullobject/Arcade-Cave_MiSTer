@@ -115,7 +115,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val start = !channelStateReg.keyOn && channelReg.flags.keyOn && !channelStateReg.active
   val stop = channelStateReg.keyOn && !channelReg.flags.keyOn
   val active = channelStateReg.active || start
-  val zero = channelStateReg.fadeOut && channelStateReg.audioPipelineState.isZero
+  val zero = channelStateReg.active && channelStateReg.fadeOut && channelStateReg.audioPipelineState.isZero
   val done = zero && channelStateReg.complete
 
   // Fetch PCM data when the audio pipeline is ready for data
@@ -133,7 +133,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     }.elsewhen(stop) {
       channelStateReg.stop()
     }.elsewhen(zero) {
-      channelStateReg.reset()
+      channelStateReg.deactivate()
     }
   }
 
@@ -218,5 +218,5 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.debug.done := stateReg === State.done
   io.debug.channelReg := channelStateReg
 
-  printf(p"ChannelController(state: $stateReg, active: ${ io.active }, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
+  printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
 }
