@@ -62,8 +62,8 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
       val level = UInt(config.levelWidth.W)
       /** Pan */
       val pan = UInt(config.panWidth.W)
-      /** Interpolate to zero */
-      val zero = Bool()
+      /** Fade to zero */
+      val fadeOut = Bool()
     })
     /** Output port */
     val out = ValidIO(new Bundle {
@@ -133,7 +133,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     inputReg.state.adpcm(step, sample)
   }
 
-  // When fading out we just add an empty ADPCM value so the pipeline will interpolate to zero
+  // Add an empty ADPCM value when the pipeline is fading out, so it will interpolate back to zero
   when(stateReg === State.zero) {
     inputReg.state.adpcm(127.S, 0.S)
   }
@@ -173,7 +173,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     // Check whether PCM data is required
     is(State.check) {
       stateReg := MuxCase(State.interpolate, Seq(
-        (inputReg.state.underflow && inputReg.zero) -> State.zero,
+        (inputReg.state.underflow && inputReg.fadeOut) -> State.zero,
         inputReg.state.underflow -> State.fetch
       ))
     }

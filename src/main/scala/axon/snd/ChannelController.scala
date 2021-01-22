@@ -106,7 +106,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.in.bits.pitch := channelReg.pitch
   audioPipeline.io.in.bits.level := channelReg.level
   audioPipeline.io.in.bits.pan := channelReg.pan
-  audioPipeline.io.in.bits.zero := channelStateReg.fadeOut
+  audioPipeline.io.in.bits.fadeOut := channelStateReg.fadeOut
   audioPipeline.io.pcmData.valid := io.mem.valid
   audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
   audioPipeline.io.loopStart := channelStateReg.loopStart

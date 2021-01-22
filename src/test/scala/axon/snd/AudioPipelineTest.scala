@@ -60,7 +60,7 @@ trait AudioPipelineTestHelpers {
     dut.io.in.bits.pitch.poke(pitch.U)
     dut.io.in.bits.level.poke(level.U)
     dut.io.in.bits.pan.poke(pan.U)
-    dut.io.in.bits.zero.poke(zero.B)
+    dut.io.in.bits.fadeOut.poke(zero.B)
   }
 
   protected def waitForIdle(dut: AudioPipeline) =
@@ -125,7 +125,7 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
   it should "move to the zero state when the pipeline underflows while it is fading out" in {
     test(mkChannelPipeline) { dut =>
       dut.io.in.valid.poke(true.B)
-      dut.io.in.bits.zero.poke(true.B)
+      dut.io.in.bits.fadeOut.poke(true.B)
       dut.io.in.bits.state.underflow.poke(true.B)
       waitForCheck(dut)
       dut.clock.step()
