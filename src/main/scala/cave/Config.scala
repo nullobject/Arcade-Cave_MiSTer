@@ -58,11 +58,10 @@ object Config {
   /**
    * Video clock frequency (Hz)
    *
-   * The video clock as measured on the PCB is 28MHz, but using a integer-mode PLL to generate the
-   * clocks means that we can't generate exactly 28MHz. This is the closest we can get without using
-   * a fractional-mode PLL.
+   * The video clock as measured on the PCB is 28MHz, which is divided by 4 to give a 7MHz pixel
+   * clock.
    */
-  val VIDEO_CLOCK_FREQ = 27428571D
+  val VIDEO_CLOCK_FREQ = 28000000D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4
 
@@ -95,7 +94,7 @@ object Config {
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,
     hFrontPorch = 30,
-    vFrontPorch = 14,
+    vFrontPorch = 12,
     hRetrace = 20,
     vRetrace = 2,
   )
