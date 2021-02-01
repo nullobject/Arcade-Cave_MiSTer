@@ -83,6 +83,8 @@ class Cave extends Module {
     val progRom = new ProgRomIO
     /** Sound ROM port */
     val soundRom = new SoundRomIO
+    /** EEPROM port */
+    val eeprom = new EEPROMIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Audio port */
@@ -199,6 +201,9 @@ class Cave extends Module {
     ymz.io.mem <> io.soundRom
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
     val soundIRQ = ymz.io.irq
+
+    // TODO
+    io.eeprom.default()
 
     // Interrupt acknowledge
     intAck := cpu.io.as && cpu.io.fc === 7.U

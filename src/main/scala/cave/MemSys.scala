@@ -58,6 +58,8 @@ class MemSys extends Module {
     val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
     val soundRom = Flipped(new SoundRomIO)
+    /** EEPROM port */
+    val eeprom = Flipped(new EEPROMIO)
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
     /** Frame buffer DMA port */
@@ -140,15 +142,28 @@ class MemSys extends Module {
   )))
   soundRomCache2.io.offset := io.gameConfig.soundRomOffset
 
+  // EEPROM cache
+  val eepromCache = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.EEPROM_ADDR_WIDTH,
+    inDataWidth = Config.EEPROM_DATA_WIDTH,
+    outAddrWidth = Config.ddrConfig.addrWidth,
+    outDataWidth = Config.ddrConfig.dataWidth,
+    lineWidth = 4,
+    depth = 4,
+    wrapping = true
+  )))
+  eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
+
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(6, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(7, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
   ddrArbiter.io.in(1) <> progRomCache1.io.out
   ddrArbiter.io.in(2) <> soundRomCache1.io.out
-  ddrArbiter.io.in(3).asBurstReadMemIO <> io.videoDMA
-  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBufferDMA
-  ddrArbiter.io.in(5).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(5).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(3) <> eepromCache.io.out
+  ddrArbiter.io.in(4).asBurstReadMemIO <> io.videoDMA
+  ddrArbiter.io.in(5).asBurstWriteMemIO <> io.frameBufferDMA
+  ddrArbiter.io.in(6).asBurstReadMemIO <> io.tileRom
+  ddrArbiter.io.in(6).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
@@ -167,6 +182,8 @@ class MemSys extends Module {
     false.B -> soundRomCache1.io.in,
     true.B -> soundRomCache2.io.in
   )).asAsyncReadMemIO
+
+  io.eeprom <> eepromCache.io.in.asAsyncReadMemIO
 
   // Wait until both DDR and SDRAM are ready
   io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)
