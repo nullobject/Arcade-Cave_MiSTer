@@ -51,6 +51,8 @@ class GameConfig extends Bundle {
   val layer2RomOffset = UInt(32.W)
   /** Sound ROM offset */
   val soundRomOffset = UInt(32.W)
+  /** EEPROM offset */
+  val eepromOffset = UInt(32.W)
   /** Number of colors per palette */
   val numColors = UInt(9.W)
   /** Number of tilemap layers */
@@ -112,6 +114,7 @@ object GameConfig {
     wire.layer1RomOffset := 0x00b00000.U
     wire.layer2RomOffset := 0.U
     wire.soundRomOffset := 0x00d00000.U
+    wire.eepromOffset := 0x01100000.U
     wire.numColors := 16.U
     wire.numLayers := 2.U
     wire.spriteZoom := true.B
@@ -131,6 +134,7 @@ object GameConfig {
     wire.layer1RomOffset := 0x00b00000.U
     wire.layer2RomOffset := 0x00d00000.U
     wire.soundRomOffset := 0x00f00000.U
+    wire.eepromOffset := 0x01300000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := false.B
@@ -150,6 +154,7 @@ object GameConfig {
     wire.layer1RomOffset := 0x01900000.U
     wire.layer2RomOffset := 0x02100000.U
     wire.soundRomOffset := 0x02500000.U
+    wire.eepromOffset := 0x02900000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
@@ -169,6 +174,7 @@ object GameConfig {
     wire.layer1RomOffset := 0x00500000.U
     wire.layer2RomOffset := 0x00500000.U
     wire.soundRomOffset := 0x00900000.U
+    wire.eepromOffset := 0x00b00000.U
     wire.numColors := 256.U
     wire.numLayers := 1.U
     wire.spriteZoom := true.B
