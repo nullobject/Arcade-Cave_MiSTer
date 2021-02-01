@@ -126,6 +126,9 @@ object Config {
   val SOUND_ROM_ADDR_WIDTH = 25
   val SOUND_ROM_DATA_WIDTH = 8
 
+  val EEPROM_ADDR_WIDTH = 6
+  val EEPROM_DATA_WIDTH = 16
+
   val TILE_ROM_ADDR_WIDTH = 32
   val TILE_ROM_DATA_WIDTH = 64
 

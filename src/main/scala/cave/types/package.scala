@@ -59,6 +59,11 @@ package object types {
     override def cloneType: this.type = new SoundRomIO().asInstanceOf[this.type]
   }
 
+  /** EEPROM IO */
+  class EEPROMIO extends AsyncReadMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH) {
+    override def cloneType: this.type = new EEPROMIO().asInstanceOf[this.type]
+  }
+
   /** Tile ROM IO */
   class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
     override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
