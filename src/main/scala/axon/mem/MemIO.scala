@@ -100,7 +100,7 @@ object ReadMemIO {
    *
    * @param key     The key to used to select the interface.
    * @param default The default interface.
-   * @param outs    A list of key-interface pairs.
+   * @param mapping A list of key-interface pairs.
    */
   def muxLookup[K <: UInt](key: K, default: ReadMemIO, mapping: Seq[(K, ReadMemIO)]): ReadMemIO = {
     val mem = Wire(chiselTypeOf(mapping.head._2))
