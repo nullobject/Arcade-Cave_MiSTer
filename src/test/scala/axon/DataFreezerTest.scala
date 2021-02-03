@@ -38,7 +38,7 @@ import chiseltest.experimental.UncheckedClockPoke._
 import org.scalatest._
 
 class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers {
-  private def mkFreezer = new DataFreezer(addrWidth = 8, dataWidth = 8)
+  private def mkFreezer = new ReadWriteDataFreezer(addrWidth = 8, dataWidth = 8)
 
   behavior of "read"
 
@@ -47,6 +47,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
       // Read
       dut.io.in.rd.poke(true.B)
       dut.io.out.waitReq.poke(true.B)
+      dut.io.out.rd.expect(true.B)
       dut.clock.step()
 
       // Wait
@@ -92,6 +93,56 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
       dut.io.targetClock.low()
       dut.io.targetClock.high()
       dut.io.in.dout.expect(0.U)
+    }
+  }
+
+  behavior of "write"
+
+  it should "latch a write request" in {
+    test(mkFreezer) { dut =>
+      // Write
+      dut.io.in.wr.poke(true.B)
+      dut.io.out.waitReq.poke(true.B)
+      dut.io.out.wr.expect(true.B)
+      dut.clock.step()
+
+      // Wait
+      dut.io.out.waitReq.poke(false.B)
+      dut.io.out.wr.expect(true.B)
+      dut.clock.step()
+      dut.io.out.waitReq.poke(true.B)
+      dut.io.out.wr.expect(false.B)
+      dut.clock.step()
+
+      // Rising edge
+      dut.io.targetClock.low()
+      dut.io.targetClock.high()
+      dut.io.out.wr.expect(true.B)
+    }
+  }
+
+  behavior of "write"
+
+  it should "latch a write request" in {
+    test(mkFreezer) { dut =>
+      // Write
+      dut.io.in.wr.poke(true.B)
+      dut.io.out.waitReq.poke(true.B)
+      dut.io.out.wr.expect(true.B)
+      dut.clock.step()
+
+      // Wait
+      dut.io.out.waitReq.poke(false.B)
+      dut.io.out.wr.expect(true.B)
+      dut.clock.step()
+      dut.io.out.waitReq.poke(true.B)
+      dut.io.out.wr.expect(false.B)
+      dut.clock.step()
+
+      // Rising edge
+      dut.io.targetClock.low()
+      dut.io.targetClock.high()
+      dut.io.out.wr.expect(true.B)
     }
   }
 
