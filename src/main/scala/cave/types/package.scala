@@ -60,7 +60,7 @@ package object types {
   }
 
   /** EEPROM IO */
-  class EEPROMIO extends AsyncReadMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH) {
+  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH) {
     override def cloneType: this.type = new EEPROMIO().asInstanceOf[this.type]
   }
 

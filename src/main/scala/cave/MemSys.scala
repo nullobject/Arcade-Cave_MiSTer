@@ -183,7 +183,7 @@ class MemSys extends Module {
     true.B -> soundRomCache2.io.in
   )).asAsyncReadMemIO
 
-  io.eeprom <> eepromCache.io.in.asAsyncReadMemIO
+  io.eeprom <> eepromCache.io.in
 
   // Wait until both DDR and SDRAM are ready
   io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)

@@ -97,6 +97,9 @@ class Cave extends Module {
   val frameStart = WireInit(false.B)
   val intAck = Wire(Bool())
 
+  // A write-only memory interface is used to connect the CPU to the EEPROM
+  val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
+
   // GPU
   val gpu = Module(new GPU)
   gpu.io.frameReq := Util.rising(ShiftRegister(frameStart, 2))
@@ -125,6 +128,10 @@ class Cave extends Module {
 
     // EEPROM
     val eeprom = Module(new EEPROM)
+    eeprom.io.mem <> io.eeprom
+    eeprom.io.serial.cs := RegEnable(eepromMem.din(9), false.B, eepromMem.wr)
+    eeprom.io.serial.sck := RegEnable(eepromMem.din(10), false.B, eepromMem.wr)
+    eeprom.io.serial.sdi := RegEnable(eepromMem.din(11), false.B, eepromMem.wr)
 
     // Main RAM
     val mainRam = Module(new SinglePortRam(
@@ -202,9 +209,6 @@ class Cave extends Module {
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
     val soundIRQ = ymz.io.irq
 
-    // TODO
-    io.eeprom.default()
-
     // Interrupt acknowledge
     intAck := cpu.io.as && cpu.io.fc === 7.U
 
@@ -215,6 +219,7 @@ class Cave extends Module {
     when(Util.rising(vBlank)) { vBlankIRQ := true.B }
 
     // Set memory interface defaults, the actual values are assigned in the memory map
+    eepromMem.default()
     videoRegs.io.mem.default()
     layer0Regs.io.mem.default()
     layer1Regs.io.mem.default()
@@ -223,11 +228,10 @@ class Cave extends Module {
     layer1Ram.io.portA.default()
     layer2Ram.io.portA.default()
     paletteRam.io.portA.default()
-    eeprom.io.mem.default()
 
     // Set input ports
     val input0 = "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1)
-    val input1 = "b1111".U ## eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2)
+    val input1 = "b1111".U ## eeprom.io.serial.sdo ## "b11".U ## ~encodePlayer(io.joystick.player2)
 
     // Memory map
     val map = new MemMap(cpu.io)
@@ -255,7 +259,7 @@ class Cave extends Module {
       map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000).r { (_, _) => input0 }
       map(0xb00002).r { (_, _) => input1 }
-      map(0xc00000).writeMem(eeprom.io.mem)
+      map(0xc00000).writeMem(eepromMem)
     }
 
     // DoDonPachi
@@ -284,7 +288,7 @@ class Cave extends Module {
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
-      map(0xe00000).writeMem(eeprom.io.mem)
+      map(0xe00000).writeMem(eepromMem)
     }
 
     // ESP Ra.De.
@@ -305,7 +309,7 @@ class Cave extends Module {
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
-      map(0xe00000).writeMem(eeprom.io.mem)
+      map(0xe00000).writeMem(eepromMem)
     }
 
     // Puzzle Uo Poko
@@ -322,7 +326,7 @@ class Cave extends Module {
       map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
       map(0x900000).r { (_, _) => input0 }
       map(0x900002).r { (_, _) => input1 }
-      map(0xa00000).writeMem(eeprom.io.mem)
+      map(0xa00000).writeMem(eepromMem)
     }
 
     // When the game is paused, request frames at the start of every vertical blank
