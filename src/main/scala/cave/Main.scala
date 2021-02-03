@@ -110,12 +110,12 @@ class Main extends Module {
   sdram.io.sdram <> io.sdram
 
   // Memory subsystem
-  val mem = Module(new MemSys)
-  mem.io.gameConfig <> gameConfigReg
-  mem.io.options <> io.options
-  mem.io.ioctl <> io.ioctl
-  mem.io.ddr <> ddr.io.mem
-  mem.io.sdram <> sdram.io.mem
+  val memSys = Module(new MemSys)
+  memSys.io.gameConfig <> gameConfigReg
+  memSys.io.options <> io.options
+  memSys.io.ioctl <> io.ioctl
+  memSys.io.ddr <> ddr.io.mem
+  memSys.io.sdram <> sdram.io.mem
 
   // Video subsystem
   val videoSys = Module(new VideoSys)
@@ -135,7 +135,7 @@ class Main extends Module {
   ))
   frameBufferDMA.io.enable := downloadDoneReg
   frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
-  frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
+  frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
 
   // Video DMA
   val videoDMA = Module(new VideoDMA(
@@ -146,7 +146,7 @@ class Main extends Module {
   videoDMA.io.enable := downloadDoneReg
   videoDMA.io.frameBufferIndex := videoSys.io.videoDMAIndex
   videoDMA.io.pixelData <> videoSys.io.pixelData
-  videoDMA.io.ddr <> mem.io.videoDMA
+  videoDMA.io.ddr <> memSys.io.videoDMA
 
   // Cave
   val cave = Module(new Cave)
@@ -158,10 +158,10 @@ class Main extends Module {
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock, mem.io.progRom)
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, mem.io.soundRom)
-  cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, mem.io.eeprom)
-  cave.io.tileRom <> mem.io.tileRom
+  cave.io.progRom <> DataFreezer.freeze(io.cpuClock, memSys.io.progRom)
+  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, memSys.io.soundRom)
+  cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
+  cave.io.tileRom <> memSys.io.tileRom
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
 
