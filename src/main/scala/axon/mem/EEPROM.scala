@@ -52,7 +52,7 @@ class SerialIO extends Bundle {
 class EEPROM extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = AsyncReadWriteMemIO(EEPROM.ADDR_WIDTH, EEPROM.DATA_WIDTH)
+    val mem = AsyncReadWriteMemIO(EEPROM.ADDR_WIDTH + 1, EEPROM.DATA_WIDTH)
     /** Serial port */
     val serial = new SerialIO
     /** Debug port */
@@ -234,7 +234,7 @@ class EEPROM extends Module {
   io.serial.sdo := serialReg
   io.mem.rd := stateReg === State.read
   io.mem.wr := stateReg === State.writeWait
-  io.mem.addr := addrReg
+  io.mem.addr := addrReg ## 0.U
   io.mem.mask := 2.U
   io.mem.din := dataReg
   io.debug.idle := stateReg === State.idle

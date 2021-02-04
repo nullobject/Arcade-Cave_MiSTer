@@ -225,12 +225,12 @@ class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with 
 
   it should "read a word from memory" in {
     test(new EEPROM) { dut =>
-      read(dut, 42)
+      read(dut, 0x12)
       dut.io.mem.valid.poke(true.B)
       dut.io.mem.dout.poke(0x8421.U)
       dut.io.serial.sdo.expect(false.B)
       dut.io.mem.rd.expect(true.B)
-      dut.io.mem.addr.expect(42.U)
+      dut.io.mem.addr.expect(0x24.U)
       dut.clock.step()
       readBit(dut) shouldBe true
       readBit(dut) shouldBe false
@@ -256,11 +256,11 @@ class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with 
   it should "write a word to memory" in {
     test(new EEPROM) { dut =>
       enableWrite(dut)
-      write(dut, 42)
+      write(dut, 0x12)
       dut.clock.step()
       writeBits(dut, 0x1234.U(16.W))
       dut.io.mem.wr.expect(true.B)
-      dut.io.mem.addr.expect(42.U)
+      dut.io.mem.addr.expect(0x24.U)
       dut.io.mem.din.expect(0x1234.U)
     }
   }
@@ -274,7 +274,7 @@ class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with 
       for (n <- 0 to 63) {
         writeBits(dut, n.U(16.W))
         dut.io.mem.wr.expect(true.B)
-        dut.io.mem.addr.expect(n.U)
+        dut.io.mem.addr.expect((n << 1).U)
         dut.io.mem.din.expect(n.U)
       }
     }
@@ -285,10 +285,10 @@ class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with 
   it should "erase a word in memory" in {
     test(new EEPROM) { dut =>
       enableWrite(dut)
-      erase(dut, 42)
+      erase(dut, 0x12)
       dut.clock.step()
       dut.io.mem.wr.expect(true.B)
-      dut.io.mem.addr.expect(42.U)
+      dut.io.mem.addr.expect(0x24.U)
       dut.io.mem.din.expect(0xffff.U)
     }
   }
@@ -301,7 +301,7 @@ class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with 
       for (n <- 0 to 63) {
         dut.clock.step()
         dut.io.mem.wr.expect(true.B)
-        dut.io.mem.addr.expect(n.U)
+        dut.io.mem.addr.expect((n << 1).U)
         dut.io.mem.din.expect(0xffff.U)
       }
     }
