@@ -73,6 +73,7 @@ class EEPROM extends Module {
     val idle :: command :: read :: write :: erase :: shift :: readWait :: writeWait :: Nil = Enum(8)
   }
 
+  // Commands
   object Command {
     val read :: write :: writeAll :: erase :: eraseAll :: Nil = Enum(5)
   }
