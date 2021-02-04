@@ -149,8 +149,7 @@ class MemSys extends Module {
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth,
     lineWidth = 4,
-    depth = 4,
-    wrapping = true
+    depth = 4
   )))
   eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
 
