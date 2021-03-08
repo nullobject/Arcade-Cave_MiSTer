@@ -26,6 +26,7 @@
               <option value="read should latch valid output data" />
               <option value="valid should latch the valid signal" />
               <option value="wait should latch the wait signal" />
+              <option value="write should latch a write request" />
             </set>
           </value>
         </entry>
@@ -93,6 +94,30 @@
               <option value="write should latch the burst length" />
               <option value="write should write to DDR memory (burst=1)" />
               <option value="write should write to DDR memory (burst=2)" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.mem.EEPROMTest">
+          <value>
+            <set>
+              <option value="FSM should move to the command state after receiving a start bit" />
+              <option value="FSM should move to the erase state when writing is enabled" />
+              <option value="FSM should move to the idle state after sending serial data" />
+              <option value="FSM should move to the idle state after the write wait state" />
+              <option value="FSM should move to the idle state when chip select is deasserted" />
+              <option value="FSM should move to the read state after receiving a read command" />
+              <option value="FSM should move to the read wait state after a memory read request" />
+              <option value="FSM should move to the shift state after the read wait state" />
+              <option value="FSM should move to the shift state after the write state" />
+              <option value="FSM should move to the write state when writing is enabled" />
+              <option value="FSM should move to the write wait state after receiving serial data" />
+              <option value="FSM should move to the write wait state after the erase state" />
+              <option value="erase should erase a word in memory" />
+              <option value="erase should erase all words in memory" />
+              <option value="idle should assert the serial data output" />
+              <option value="read should read a word from memory" />
+              <option value="write should write a word to memory" />
+              <option value="write should write all words to memory" />
             </set>
           </value>
         </entry>

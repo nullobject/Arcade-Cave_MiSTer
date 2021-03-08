@@ -121,31 +121,6 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
     }
   }
 
-  behavior of "write"
-
-  it should "latch a write request" in {
-    test(mkFreezer) { dut =>
-      // Write
-      dut.io.in.wr.poke(true.B)
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.wr.expect(true.B)
-      dut.clock.step()
-
-      // Wait
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.out.wr.expect(true.B)
-      dut.clock.step()
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.wr.expect(false.B)
-      dut.clock.step()
-
-      // Rising edge
-      dut.io.targetClock.low()
-      dut.io.targetClock.high()
-      dut.io.out.wr.expect(true.B)
-    }
-  }
-
   behavior of "wait"
 
   it should "latch the wait signal" in {
